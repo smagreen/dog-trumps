@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>replit</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .card-div {
+      background-image: url('images/dog-card-empty.png'); 
+      background-size: contain;
+      background-repeat: no-repeat;
+      width: 100%; 
+      height: 800px;
+    }
+</style>
+</head>
+<body class="bg-black">
+  <div x-data="app()" class="grid grid-cols-1 grid-rows-5 h-screen mx-auto bg-black">
+    <div x-show="status != 'gameover'" x-transition
+      class="row-span-1 bg-cover"
+      style="background-image: url('./images/banner.png'); ">
+    </div>
+    <div x-show="status == 'gameover'" x-transition>
+      <div class="">
+        <div class="flex justify-center items-center h-full">
+          <h1 class="text-6xl text-white font-bold tracking-wider" x-text="message"></h1>
+        </div>
+        <div class="flex justify-center items-center mb-16">
+          <button x-on:click="reset()" class="bg-green-500 text-l hover:bg-gray-700 text-white font-bold py-2 px-4 mb-2 rounded-lg w-96">
+            Play Again
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-center items-center h-full">
+          <img class="rounded-lg" src="./images/banner.png">
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-5 row-span-4 gap-5 mt-4" x-show="status != 'gameover'" x-transition>
+      <!-- Left Deck -->
+        <div class="col-span-1">
+          <div class="bg-gray-900 text-white p-2 m-2 rounded-lg">
+            <h1 class="font-bold"><span x-text="playerDeck.length"></span> Cards Remaining </h1>
+          </div>
+            <template x-for="(dog, idx) in playerDeck">
+                <div 
+                  :class="idx ==0 ? '' : '-mt-32'"
+                  class="bg-cover rounded-lg border-2 border-gray-900 mx-4" 
+                  style="background-image: url('./images/dog-card.png'); height: 196px" >
+                </div>
+            </template>
+        </div>
+        <div class="col-span-3">
+            <div class="grid grid-cols-5 grid-rows-16 gap-5 h-full">
+                <!-- Player Card-->
+                <div class="col-span-2 row-span-5">
+                  <div :class="winner == 'player' ? 'animate-bounce' : ''" class="mt-2 overflow-hidden"  >
+                    <div class="card-div pt-8 pl-4" x-show="status != 'start'" x-transition>
+                      <div class="border-dashed border-2 border-sky-500 pt-2 pl-2">
+                          <img class="rounded-lg" x-bind:src="playerDeck[0].image" height="100px" width="100px" alt="dog card">
+                      </div>
+                      <div class="pt-8 pl-8">
+                        <ul class="list-disc ml-4 text-2xl" x-transition>
+                          <li class="mb-4">Name: <span x-text="playerDeck[0].name"></span></li>
+                          <li class="cursor-pointer mb-4" x-on:click="play(1)">Drool: <span x-text="playerDeck[0].drool"></span></li>
+                          <li class="cursor-pointer mb-4" x-on:click="play(2)">Exercise: <span x-text="playerDeck[0].exercise"></span></li>
+                          <li class="cursor-pointer mb-4" x-on:click="play(3)">Intelligence: <span x-text="playerDeck[0].intelligence"></span></li>
+                          <li class="cursor-pointer mb-4" x-on:click="play(4)">Friendliness: <span x-text="playerDeck[0].friendliness"></span></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Middle Button Area-->
+                <div class="col-span-1 row-span-5">
+                  <div class="ml-2 mt-2">
+                    <select x-model="deckSize" class="w-full text-l font-bold mb-4 h-10 bg-gray-800 text-white text-center rounded-lg">
+                      <option value="" >Select Deck Size</option>
+                      <option>2</option>
+                      <option>4</option>
+                      <option>6</option>
+                      <option>8</option>
+                      <option>10</option>
+                      <option>12</option>
+                      <option>14</option>
+                      <option>16</option>
+                    </select>
+                    <button x-on:click="reset()" class="bg-green-500 text-l hover:bg-gray-700 text-white font-bold py-2 px-4 mb-2 rounded-lg w-full">
+                      Deal
+                    </button>
+                    <div class="bg-black h-10">
+                      <div class="animate-bounce text-center">
+                        <span class="text-4xl text-yellow-400 font-bold center tracking-wider" x-text="message" x-show="showMessage" x-transition></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Computer Card-->
+                <div class="bg-black col-span-2 row-span-5" >
+                    <img class="rounded-lg" src="./images/dog-card.png" alt="dog card" x-show="status != 'reveal' && status != 'start'" x-transition>
+                  
+                    <div class="mt-2 overflow-hidden" :class="winner == 'computer' ? 'animate-bounce' : ''">
+                      <div class="card-div pt-8 pl-4" x-show="status=='reveal'" x-transition >
+                        <div class="border-dashed border-2 border-sky-500 pt-2 pl-2">
+                            <img class="rounded-lg" x-bind:src="computerDeck[0].image" height="100px" width="100px" alt="dog card">
+                        </div>
+                        <div class="pt-8 pl-8">
+                          <ul class="list-disc ml-4 text-2xl">
+                            <li>Name: <span x-text="computerDeck[0].name"></span></li>
+                            <li>Drool: <span x-text="computerDeck[0].drool"></span></li>
+                            <li>Exercise: <span x-text="computerDeck[0].exercise"></span></li>
+                            <li>Intelligence: <span x-text="computerDeck[0].intelligence"></span></li>
+                            <li>Friendliness: <span x-text="computerDeck[0].friendliness"></span></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                </div>
+                <!-- Message Area-->
+                <div class="bg-black col-span-5 row-span-1 gap-5">Message Area
+                </div>
+            </div>
+        </div>
+        <!-- Right Deck-->
+        <div class="col-span-1">
+          <div class="bg-gray-900 text-white p-2 m-2 rounded-lg">
+            <h1 class="font-bold"><span x-text="computerDeck.length"></span> Cards Remaining </h1>
+          </div>
+          <template x-for="(dog, idx) in computerDeck">
+            <div 
+              :class="idx ==0 ? '' : '-mt-32'"
+              class="bg-cover rounded-lg border-2 border-gray-900 mx-4" 
+              style="background-image: url('./images/dog-card.png'); height: 196px" >
+            </div>
+        </template>
+        
+        </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
+
+<script>
+  const app = () =>{
+    return {
+      status: 'start', // start, playing, reveal, gameover
+      title: 'Celebrity Dogs',
+      deckSize: 0,
+      message: '',
+      winner: '',
+      showMessage: false,
+      deck: [
+        {id:0, name: "Pugsley", image: "./images/dog-1.jpg", drool:1, exercise:2, intelligence:3, friendliness:4} ,
+        {id:1, name: "Barkley", image: "./images//dog-2.jpg", drool:2, exercise:2, intelligence:5, friendliness:2}, 
+        {id:2, name: "Bark Wahlberg", image: "./images/dog-3.jpg", drool:3, exercise:4, intelligence:5, friendliness:0}, 
+        {id:3, name: "Bark Ruffalo", image: "./images/dog-4.jpg", drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:4, name: "Bark Hamill", image: "./images/dog-5.jpg" , drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:5, name: "Bark Twain", image: "./images/dog-6.jpg", drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:6, name: "Bark Obama", image: "./images/dog-7.jpg", drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:7, name: "Bark Zuckerberg", image: "./images/dog-8.jpg", drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:8, name: "Bark Cuban", image: "./images/dog-9.jpg", drool:1, exercise:1, intelligence:1, friendliness:1},
+        {id:9, name: "The Pugmaster", image: "./images/dog-10.jpg", drool:9, exercise:9, intelligence:9, friendliness:1},
+      ],
+      playerDeck: [],
+      computerDeck: [],
+      reset(){
+
+        if(this.deckSize == 0){
+          alert("Please select a deck size")
+          return
+        }
+        this.playerDeck = this.deck.slice(0, this.deckSize/2)
+        this.computerDeck = this.deck.slice(this.deckSize/2)
+        this.status = 'playing'
+      },
+      play(category){
+
+        let winner = 0
+
+        switch(category){
+          case 1: // Drool
+            winner = this.playerDeck[0].drool >= this.computerDeck[0].drool ? 1 : 2  
+            break;
+          case 2: // Exercise
+            winner = this.playerDeck[0].exercise >= this.computerDeck[0].exercise ? 1 : 2
+            break;
+          case 3: // Intelligence
+            winner = this.playerDeck[0].intelligence >= this.computerDeck[0].intelligence ? 1 : 2
+            break;
+          case 4: // Friendliness
+            winner = this.playerDeck[0].friendliness >= this.computerDeck[0].friendliness ? 1 : 2
+            break;
+        } 
+
+        if(winner == 1){
+          this.message = `${this.playerDeck[0].name} Wins!`
+          this.winner = 'player'
+          
+        } else {
+          this.message = `You Lose, ${this.computerDeck[0].name} Wins!`
+          this.winner = 'computer'
+        }
+
+        this.showMessage = true;
+        this.status = 'reveal';
+
+        setTimeout(() => {
+            this.message = ""
+            this.showMessage = false
+            this.winner = ''
+            this.status = 'playing';
+       
+            const playerCard = this.playerDeck.shift()
+            const computerCard = this.computerDeck.shift()
+            if(winner == 1){
+              this.playerDeck.push(playerCard)
+              this.playerDeck.push(computerCard)
+            } else {
+              this.computerDeck.push(playerCard)
+              this.computerDeck.push(computerCard)
+            }
+
+            if(this.playerDeck.length == 0 || this.computerDeck.length == 0){
+              this.status = 'gameover'
+              this.message = this.playerDeck.length == 0 ? 'You Lose!' : 'You Win!'
+            }
+
+          }, 1000);
+
+      },
+    }
+  }
+
+</script>
+
+</html>
